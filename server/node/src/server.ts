@@ -10,8 +10,7 @@ import crossOriginOpenerPolicyMiddleware from "./middleware/crossOriginOpenerPol
 import { rateLimitMiddleware } from "./middleware/rateLimitMiddleware";
 
 const CLIENT_STATIC_DIRECTORY =
-  config.CLIENT_STATIC_DIRECTORY ||
-  path.join(__dirname, "../../../client");
+  config.CLIENT_STATIC_DIRECTORY || path.join(__dirname, "../../../client");
 
 const WELL_KNOWN_STATIC_DIRECTORY =
   config.WELL_KNOWN_STATIC_DIRECTORY ||
@@ -19,7 +18,12 @@ const WELL_KNOWN_STATIC_DIRECTORY =
 
 const app = express();
 
-app.use(helmet({ crossOriginOpenerPolicy: false, contentSecurityPolicy: false }));
+app.use(
+  helmet({
+    crossOriginOpenerPolicy: false,
+    contentSecurityPolicy: false,
+  }),
+);
 app.use(rateLimitMiddleware);
 app.use(crossOriginOpenerPolicyMiddleware);
 app.use(cors());
