@@ -1,10 +1,13 @@
 import { Client, Environment, LogLevel } from "@paypal/paypal-server-sdk";
 
-const { PAYPAL_SANDBOX_CLIENT_ID, PAYPAL_SANDBOX_CLIENT_SECRET, LOG_LEVEL } =
-  process.env;
+import { config } from "./config";
+
+const { PAYPAL_SANDBOX_CLIENT_ID, PAYPAL_SANDBOX_CLIENT_SECRET, LOG_LEVEL } = config;
 
 if (!PAYPAL_SANDBOX_CLIENT_ID || !PAYPAL_SANDBOX_CLIENT_SECRET) {
-  throw new Error("Missing API credentials");
+  throw new Error(
+    "Missing API credentials. Set PAYPAL_SANDBOX_CLIENT_ID and PAYPAL_SANDBOX_CLIENT_SECRET.",
+  );
 }
 
 const { logLevel, logBody, logHeaders } = getLoggingConfig(LOG_LEVEL);

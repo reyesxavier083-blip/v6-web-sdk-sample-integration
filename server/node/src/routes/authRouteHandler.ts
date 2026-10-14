@@ -1,10 +1,10 @@
 import { OAuthAuthorizationController } from "@paypal/paypal-server-sdk";
 import type { Request, Response } from "express";
 
+import { config } from "../config";
 import { client } from "../paypalServerSdkClient";
 
-const { DOMAINS, PAYPAL_SANDBOX_CLIENT_ID, PAYPAL_SANDBOX_CLIENT_SECRET } =
-  process.env;
+const { DOMAINS, PAYPAL_SANDBOX_CLIENT_ID, PAYPAL_SANDBOX_CLIENT_SECRET } = config;
 
 const oAuthAuthorizationController = new OAuthAuthorizationController(client);
 
@@ -24,9 +24,7 @@ export async function clientTokenRouteHandler(
 
   const fieldParameters = {
     response_type: "client_token",
-    // the Fastlane component requires this domains[] parameter
     ...(DOMAINS && { "domains[]": DOMAINS }),
-    // Saved Payment Methods requires either vaultId or targetCustomerId
     ...(targetCustomerId && typeof targetCustomerId === "string"
       ? { target_customer_id: targetCustomerId }
       : {}),
@@ -43,8 +41,6 @@ export async function clientTokenRouteHandler(
       fieldParameters,
     );
 
-  // the OAuthToken interface is too general
-  // this interface is specific to the "client_token" response type
   interface ClientToken {
     accessToken: string;
     expiresIn: number;
@@ -55,7 +51,6 @@ export async function clientTokenRouteHandler(
   const { accessToken, expiresIn, scope, tokenType } = result;
   const transformedResult: ClientToken = {
     accessToken,
-    // convert BigInt value to a Number
     expiresIn: Number(expiresIn),
     scope: String(scope),
     tokenType,
@@ -64,14 +59,7 @@ export async function clientTokenRouteHandler(
   response.status(statusCode).json(transformedResult);
 }
 
-/*
- * For convenience, this route returns the PayPal Client ID to the front-end.
- * This way the .env file can be the single source of truth for the Client ID.
- * It is safe for merchant developers to hardcode Client ID values in front-end JavaScript/HTML files.
- */
 export function clientIdRouteHandler(_request: Request, response: Response) {
-  const { PAYPAL_SANDBOX_CLIENT_ID } = process.env;
-
   if (!PAYPAL_SANDBOX_CLIENT_ID) {
     throw new Error(
       "PAYPAL_SANDBOX_CLIENT_ID environment variable is not defined",

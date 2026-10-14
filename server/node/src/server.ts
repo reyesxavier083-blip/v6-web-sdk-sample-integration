@@ -1,23 +1,26 @@
 import express, { Request, Response } from "express";
+import helmet from "helmet";
 import path from "node:path";
 import cors from "cors";
 
+import { config } from "./config";
 import routes from "./routes/index";
 import errorMiddleware from "./middleware/errorMiddleware";
 import crossOriginOpenerPolicyMiddleware from "./middleware/crossOriginOpenerPolicyMiddleware";
+import { rateLimitMiddleware } from "./middleware/rateLimitMiddleware";
 
 const CLIENT_STATIC_DIRECTORY =
-  process.env.CLIENT_STATIC_DIRECTORY ||
-  // eslint-disable-next-line unicorn/prefer-module
+  config.CLIENT_STATIC_DIRECTORY ||
   path.join(__dirname, "../../../client");
 
 const WELL_KNOWN_STATIC_DIRECTORY =
-  process.env.WELL_KNOWN_STATIC_DIRECTORY ||
-  // eslint-disable-next-line unicorn/prefer-module
+  config.WELL_KNOWN_STATIC_DIRECTORY ||
   path.join(__dirname, "../../../.well-known");
 
 const app = express();
 
+app.use(helmet({ crossOriginOpenerPolicy: false, contentSecurityPolicy: false }));
+app.use(rateLimitMiddleware);
 app.use(crossOriginOpenerPolicyMiddleware);
 app.use(cors());
 app.use(express.json());
@@ -25,18 +28,14 @@ app.use(routes);
 app.use("/client", express.static(CLIENT_STATIC_DIRECTORY));
 app.use("/.well-known", express.static(WELL_KNOWN_STATIC_DIRECTORY));
 
-/* ######################################################################
- * Entry point for client examples containing HTML, JS, and CSS
- * ###################################################################### */
-
 app.get("/", (_request: Request, response: Response) => {
   response.redirect("/client/index.html");
 });
 
 app.use(errorMiddleware);
 
-const port = process.env.PORT ? Number(process.env.PORT) : 8080;
-const hostname = process.env.HOSTNAME ?? "localhost";
+const port = config.PORT;
+const hostname = config.HOSTNAME;
 
 app.listen({ port, hostname }, async () => {
   console.log(`Node.js web server listening at: http://${hostname}:${port}`);
@@ -44,9 +43,7 @@ app.listen({ port, hostname }, async () => {
 });
 
 async function configureNgrokForHTTPS(port: number) {
-  const { NGROK_AUTHTOKEN } = process.env;
-
-  if (!NGROK_AUTHTOKEN) {
+  if (!config.NGROK_AUTHTOKEN) {
     return;
   }
 
@@ -55,7 +52,7 @@ async function configureNgrokForHTTPS(port: number) {
 
     const listener = await ngrok.connect({
       addr: port,
-      authtoken: NGROK_AUTHTOKEN,
+      authtoken: config.NGROK_AUTHTOKEN,
     });
 
     console.log(`Ingress secure tunnel established at: ${listener.url()}`);

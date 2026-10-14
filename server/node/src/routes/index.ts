@@ -28,8 +28,15 @@ import {
 import { createSubscriptionRouteHandler } from "./subscriptionsRouteHandler";
 import { findEligibleMethodsRouteHandler } from "./findEligibleMethodsRouteHandler";
 import { getProductsRouteHandler } from "./productsRouteHandler";
+import {
+  healthRouteHandler,
+  readinessRouteHandler,
+} from "./healthRouteHandler";
 
 const router = Router();
+
+router.get("/health", healthRouteHandler);
+router.get("/readyz", readinessRouteHandler);
 
 router.get(
   "/paypal-api/auth/browser-safe-client-token",

@@ -10,18 +10,29 @@ export default async function errorMiddleware(
   response: Response,
   _next: NextFunction,
 ) {
+  const requestId = crypto.randomUUID();
+
   if (error instanceof ZodError) {
     response.status(400).json({
       error: "Bad Request",
       errorDescription: z.prettifyError(error),
+      requestId,
     });
-  } else if (error instanceof ApiError || error instanceof CustomApiError) {
-    const { result, statusCode } = error;
-    response.status(statusCode).json(result);
-  } else {
-    response.status(500).json({
-      error: "Internal Server Error",
-      errorDescription: error.toString(),
-    });
+    return;
   }
+
+  if (error instanceof ApiError || error instanceof CustomApiError) {
+    const { result, statusCode } = error;
+    response.status(statusCode).json({
+      ...result,
+      requestId,
+    });
+    return;
+  }
+
+  response.status(500).json({
+    error: "Internal Server Error",
+    errorDescription: error.message || error.toString(),
+    requestId,
+  });
 }
