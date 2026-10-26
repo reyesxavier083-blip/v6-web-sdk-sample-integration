@@ -15,7 +15,6 @@ export default defineConfig([
   {
     rules: {
       "max-params": ["error", 2],
-      "unicorn/no-unnecessary-fetch-options": "off",
     },
   },
 ]);
